@@ -1,77 +1,75 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
-public class PlayerMovement : MonoBehaviour, IMove
+public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] Rigidbody rb;
-    [SerializeField] float forwardSpeed;
-    [SerializeField] float horizontalSpeed;
-    [SerializeField] float jumpPower;
-    private Vector3 _velocity = new Vector3();
-    [SerializeField] bool isGrounded;
-    [SerializeField] float maxHorizontalDistance;
-    private Vector3 clampedPosition;
-    public void Jump()
-    {
-        if (!GameInstance.Instance.isGameStarted)
-        {
-            _velocity = Vector3.zero;
-            return;
-        }
-        else
-        {
-            isGrounded = Physics.Raycast(rb.position, Vector3.down, 0.51f);
-            if (Input.GetKeyDown(KeyCode.Space) && isGrounded == true)
-            {
-                _velocity.y = jumpPower;
-                rb.velocity = _velocity;
-                isGrounded = false;
-            }
-        }
-        //Debug.LogWarning(isGrounded);
+       [SerializeField] private float _forwardSpeed;
+       [SerializeField] private float _speed = 5f;
 
-    }
+       [SerializeField] private float _horizontalSpeed;
+       [SerializeField] private float _verticalSpeed;
 
-    public void Move()
-    {
-        if (!GameInstance.Instance.isGameStarted)
-        {
-            _velocity = Vector3.zero;
-            return;
-        }
-        //if (!GameInstance.Instance.isGameLost)
-        //{
-        //    _velocity = Vector3.zero;
-        //    rb.position = Vector3.zero;
-        //    return;
-        //}
+       [SerializeField] private float _jumpForce;
+       [SerializeField]
+       private float maxLeft;
+       [SerializeField]
+       private float maxRight;
+   
+       [SerializeField] private Rigidbody _rigidbody;
+   	
+       private Vector3 _velocity = new Vector3();
+       
+       private bool _isGrounded;
+   
+       private void Start()
+       {
+           _rigidbody = GetComponent<Rigidbody>();
+       }
+   
+       private void Update()
+       {
+           // var horizontalInput = Input.GetAxis("Horizontal");
+           // var verticalInput = Input.GetAxis("Vertical");
+           
+           
+           if (Input.GetKey(KeyCode.UpArrow))
+           {
+               transform.Translate(Vector3.forward * _speed * Time.deltaTime);
 
-        if (Mathf.Abs(rb.position.x) > maxHorizontalDistance)
-        {
-            clampedPosition = rb.position;
-            clampedPosition.x = Mathf.Clamp(clampedPosition.x, -maxHorizontalDistance, maxHorizontalDistance);
-            rb.position = clampedPosition;
-        }
-        GetVelocity();
-    }
-    public void GetVelocity()
-    {
-        _velocity.x = Input.GetAxis("Horizontal") * horizontalSpeed;
-        _velocity.y = rb.velocity.y;
-        _velocity.z = forwardSpeed;
-        rb.velocity = _velocity;
+           }
+           
+           if (Input.GetKey(KeyCode.LeftArrow))
+           {
+               transform.Translate(Vector3.left * _speed * Time.deltaTime);
+           }
+           
+           if (Input.GetKey(KeyCode.RightArrow))
+           {
+               transform.Translate(Vector3.right * _speed * Time.deltaTime);
+           }
+           
 
-    }
+           var pos = transform.position;
+           pos.x = Mathf.Clamp(pos.x, maxLeft, maxRight);
+           transform.position = pos;
+           
+           _rigidbody.velocity = _velocity;
 
-    private void Update()
-    {
-        Jump();
-    }
-    private void FixedUpdate()
-    {
-
-        Move();
-    }
-
+           if (Input.GetKeyDown(KeyCode.Space) && _isGrounded)
+           {
+               // _rigidbody.AddForce(Vector3.up * 6f, ForceMode.Impulse);
+               // _isGrounded = false;
+               _velocity.y += Mathf.Sqrt(_jumpForce * -3.0f * Physics.gravity.y);
+           }
+           
+           _velocity.y += Physics.gravity.y * Time.deltaTime;
+       }
+   
+       
+       private void FixedUpdate()
+       {
+           _isGrounded = Physics.Raycast(transform.position, Vector3.down, 1.1f);
+       }
 }
